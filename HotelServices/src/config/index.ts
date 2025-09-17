@@ -1,5 +1,8 @@
 // This file contains all the basic configuration logic for the app server to work
 import dotenv from 'dotenv';
+// import path from 'path';
+
+// dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 type ServerConfig = {
     PORT: number
