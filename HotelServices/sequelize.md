@@ -19,6 +19,8 @@
 
 - To migration file (for up)
 2. npx sequelize-cli db:migrate
+- NOTE: npm run migrate (instead of above line write this because I wrote script for this in package.json)
 
 - To revert you content (for down)
-3. npx sequelize-cli db:migrate:undo
+3. npx sequelize-cli db:migrate:
+NOTE: npm run rollback (instead of above line write this because I wrote script for this in package.json)
