@@ -24,3 +24,6 @@
 - To revert you content (for down)
 3. npx sequelize-cli db:migrate:
 NOTE: npm run rollback (instead of above line write this because I wrote script for this in package.json)
+
+## http-status-code
+npm i http-status-codes
