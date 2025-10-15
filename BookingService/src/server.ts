@@ -5,6 +5,8 @@ import v2Router from './routers/v2/index.router';
 import { appErrorHandler, genericErrorHandler } from './middlewares/error.middleware';
 import logger from './config/logger.config';
 import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
+import { v4 as uuidV4 } from 'uuid';
+import { asyncLocalStorage } from './utils/helpers/request.helpers';
 const app = express();
 
 app.use(express.json());
@@ -25,8 +27,12 @@ app.use('/api/v2', v2Router);
 app.use(appErrorHandler);
 app.use(genericErrorHandler);
 
+// Generate a server startup correlation ID
+const serverStartupCorrelationId = uuidV4();
 
-app.listen(serverConfig.PORT, () => {
-    logger.info(`Server is running on http://localhost:${serverConfig.PORT}`);
-    logger.info(`Press Ctrl+C to stop the server.`);
+asyncLocalStorage.run({ correlationId: serverStartupCorrelationId }, () => {
+    app.listen(serverConfig.PORT, () => {
+        logger.info(`Server is running on http://localhost:${serverConfig.PORT}`);
+        logger.info(`Press Ctrl+C to stop the server.`);
+    });
 });

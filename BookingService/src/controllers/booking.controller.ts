@@ -15,7 +15,7 @@ export const confirmBookingHandler = async (req: Request, res: Response) => {
     const booking = await confirmBookingService(req.params.idempotencyKey);
 
     res.status(200).json({
-        bookingId: booking.id,
+        bookingId: booking.id, 
         status: booking.status,
     });
 }

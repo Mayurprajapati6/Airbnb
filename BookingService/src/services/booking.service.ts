@@ -1,14 +1,15 @@
 import { CreateBookingDTO } from "../dto/booking.dto";
-import { confirmBooking, createBooking, createIdempotencyKey, finalizeIdempotencyKey, getIdempotencyKey } from "../repositories/booking.repository";
+import { confirmBooking, createBooking, createIdempotencyKey, finalizeIdempotencyKey, getIdempotencyKeyWithLock } from "../repositories/booking.repository";
 import { BadRequestError, NotFoundError } from "../utils/errors/app.error";
 import { generateIdempotencyKey } from "../utils/generateIdempotencyKey";
+import prismaClient from '../prisma/client';
 
 
 export async function createBookingService(createBookingDTO: CreateBookingDTO){
     const booking = await createBooking({
         userId: createBookingDTO.userId,
         hotelId: createBookingDTO.hotelId,
-        totalGuest: createBookingDTO.totalGuest,
+        totalGuests: createBookingDTO.totalGuest,
         bookingAmount: createBookingDTO.bookingAmount
     });
 
@@ -23,18 +24,23 @@ export async function createBookingService(createBookingDTO: CreateBookingDTO){
 }
 
 export async function confirmBookingService(idempotencyKey: string) {
-    const idempotencyKeyData = await getIdempotencyKey(idempotencyKey);
 
-    if(!idempotencyKeyData) {
-        throw new NotFoundError('Idempotency key not found');
-    }
+    return await prismaClient.$transaction(async (tx) => {
 
-    if(idempotencyKeyData.finalized){
-        throw new BadRequestError('Idempotency key already finalized');
-    }
+        const idempotencyKeyData = await getIdempotencyKeyWithLock(tx, idempotencyKey);
 
-    const booking = await confirmBooking(idempotencyKeyData.bookingId);
-    await finalizeIdempotencyKey(idempotencyKey);
+        if(!idempotencyKeyData || !idempotencyKeyData.bookingId) {
+            throw new NotFoundError('Idempotency key not found');
+        }
 
-    return booking;
-} 
+        if(idempotencyKeyData.finalized) {
+            throw new BadRequestError('Idempotency key already finalized');
+        }
+
+        const booking = await confirmBooking(tx, idempotencyKeyData.bookingId);
+        await finalizeIdempotencyKey(tx, idempotencyKey);
+
+        return booking;
+
+    }); 
+}
